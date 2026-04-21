@@ -7,6 +7,7 @@ import Analytics from './Analytics';
 import System from './System';
 import { NotificationProvider } from '../../context/NotificationContext';
 import NotificationDropdown from '../Shared/NotificationDropdown';
+import { useToast } from '../../context/ToastContext';
 
 interface User {
   _id: string;
@@ -21,6 +22,7 @@ interface User {
 
 const AdminDashboard = () => {
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { showToast } = useToast();
   const [activeSection, setActiveSection] = useState<'dashboard' | 'users' | 'properties' | 'bookings' | 'analytics' | 'settings'>('dashboard');
 
   // User management state
@@ -166,11 +168,11 @@ const AdminDashboard = () => {
         setUsers(prev => prev.filter(u => u._id !== userId));
         fetchStats();
       } else {
-        alert('Failed to delete user');
+        showToast('Failed to delete user', 'error');
       }
     } catch (error) {
       console.error('Delete user error:', error);
-      alert('Server error');
+      showToast('Server error while deleting user', 'error');
     }
   };
 
@@ -189,12 +191,13 @@ const AdminDashboard = () => {
 
       if (response.ok) {
         setUsers(prev => prev.map(u => u._id === user._id ? { ...u, isActive: newStatus } : u));
+        showToast(`User ${newStatus ? 'activated' : 'deactivated'} successfully`);
       } else {
-        alert('Failed to update user status');
+        showToast('Failed to update user status', 'error');
       }
     } catch (error) {
       console.error('Toggle status error:', error);
-      alert('Server error');
+      showToast('Server error while updating status', 'error');
     }
   };
 

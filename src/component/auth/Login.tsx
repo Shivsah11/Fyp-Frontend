@@ -99,9 +99,6 @@ const Login = () => {
               <input type="checkbox" className="w-4 h-4 text-teal-500 border-gray-300 rounded focus:ring-teal-400 bg-white border-gray-300" />
               Remember me
             </label>
-            <Link to="/forgot-password" data-id="forgot-password-link" className="text-teal-600 hover:text-teal-700 font-medium transition-colors">
-              Forgot password?
-            </Link>
           </div>
 
           {/* Error Message */}

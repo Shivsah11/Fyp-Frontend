@@ -49,17 +49,22 @@ const PrivateRoute = ({ children, requiredRole }: { children: React.ReactElement
     return <Navigate to="/" replace />;
   }
 
-  if (userRole !== requiredRole) {
+  const normalizedUserRole = userRole.charAt(0).toUpperCase() + userRole.slice(1).toLowerCase();
+  const normalizedRequiredRole = requiredRole.charAt(0).toUpperCase() + requiredRole.slice(1).toLowerCase();
+
+  if (normalizedUserRole !== normalizedRequiredRole) {
     // Redirect to appropriate dashboard based on role
     return <Navigate to={
-      userRole === 'Tenant' ? '/tenant/dashboard' :
-        userRole === 'Admin' ? '/admin/dashboard' :
+      normalizedUserRole === 'Tenant' ? '/tenant/dashboard' :
+        normalizedUserRole === 'Admin' ? '/admin/dashboard' :
           '/landlord/dashboard'
     } replace />;
   }
 
   return children;
 };
+
+import { ToastProvider } from "./context/ToastContext";
 
 function App() {
   const getDashboardRoute = () => {
@@ -70,77 +75,79 @@ function App() {
   };
 
   return (
-    <DarkModeProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
+    <ToastProvider>
+      <DarkModeProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
 
-          {/* Tenant Routes */}
-          <Route
-            path="/tenant/dashboard"
-            element={
-              <PrivateRoute requiredRole="Tenant">
-                <TenantDashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/tenant/explore"
-            element={
-              <PrivateRoute requiredRole="Tenant">
-                <ExploreRooms />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/tenant/room/:roomId"
-            element={
-              <PrivateRoute requiredRole="Tenant">
-                <RoomDetailPage />
-              </PrivateRoute>
-            }
-          />
+            {/* Tenant Routes */}
+            <Route
+              path="/tenant/dashboard"
+              element={
+                <PrivateRoute requiredRole="Tenant">
+                  <TenantDashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/tenant/explore"
+              element={
+                <PrivateRoute requiredRole="Tenant">
+                  <ExploreRooms />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/tenant/room/:roomId"
+              element={
+                <PrivateRoute requiredRole="Tenant">
+                  <RoomDetailPage />
+                </PrivateRoute>
+              }
+            />
 
-          {/* Landlord Routes */}
-          <Route
-            path="/landlord/dashboard"
-            element={
-              <PrivateRoute requiredRole="Landlord">
-                <LandlordDashboard />
-              </PrivateRoute>
-            }
-          />
+            {/* Landlord Routes */}
+            <Route
+              path="/landlord/dashboard"
+              element={
+                <PrivateRoute requiredRole="Landlord">
+                  <LandlordDashboard />
+                </PrivateRoute>
+              }
+            />
 
-          {/* Admin Routes */}
-          <Route
-            path="/admin/dashboard"
-            element={
-              <PrivateRoute requiredRole="Admin">
-                <AdminDashboard />
-              </PrivateRoute>
-            }
-          />
+            {/* Admin Routes */}
+            <Route
+              path="/admin/dashboard"
+              element={
+                <PrivateRoute requiredRole="Admin">
+                  <AdminDashboard />
+                </PrivateRoute>
+              }
+            />
 
-          {/* Payment / eSewa Mock Routes */}
-          <Route path="/esewa-checkout" element={<MockEsewaGateway />} />
-          <Route path="/payment/success" element={<PaymentSuccess />} />
+            {/* Payment / eSewa Mock Routes */}
+            <Route path="/esewa-checkout" element={<MockEsewaGateway />} />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
 
-          {/* Default dashboard route - redirect based on stored role */}
-          <Route
-            path="/dashboard"
-            element={<Navigate to={getDashboardRoute()} replace />}
-          />
+            {/* Default dashboard route - redirect based on stored role */}
+            <Route
+              path="/dashboard"
+              element={<Navigate to={getDashboardRoute()} replace />}
+            />
 
-          {/* Catch all route - redirect to login */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </DarkModeProvider>
+            {/* Catch all route - redirect to login */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </DarkModeProvider>
+    </ToastProvider>
   );
 }
 

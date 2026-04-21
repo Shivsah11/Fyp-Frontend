@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import PropertyMap from '../../Shared/PropertyMap';
 import { useDarkMode } from '../../../context/DarkModeContext';
+import { useToast } from '../../../context/ToastContext';
+import ConfirmationModal from '../../Shared/ConfirmationModal';
+import StatusModal from '../../Shared/StatusModal';
 
 interface Booking {
   id: string;
@@ -27,6 +30,7 @@ interface Booking {
 
 const Bookings: React.FC = () => {
   const { isDarkMode } = useDarkMode();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'active' | 'completed' | 'cancelled'>('pending');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -38,6 +42,33 @@ const Bookings: React.FC = () => {
   const [itemsPerPage] = useState(5);
 
   const [syncing, setSyncing] = useState(false);
+
+  // Modal States
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type: 'danger' | 'warning' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => { },
+    type: 'info'
+  });
+
+  const [statusModal, setStatusModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'success'
+  });
 
   useEffect(() => {
     fetchBookings();
@@ -157,10 +188,15 @@ const Bookings: React.FC = () => {
     });
   };
 
-  const handleApproveBooking = async (bookingId: string) => {
-    if (window.confirm('Are you sure you want to approve this booking?')) {
-      try {
-        // Create notification for tenant first
+  const handleApproveBooking = (bookingId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Approve Booking',
+      message: 'Are you sure you want to approve this booking? The tenant will be notified to proceed with payment.',
+      type: 'success',
+      onConfirm: async () => {
+        try {
+          // Create notification for tenant first
         const notification = {
           id: Date.now().toString(),
           type: 'booking_approved',
@@ -248,20 +284,31 @@ const Bookings: React.FC = () => {
           console.error('Sync error:', syncError);
         }
 
-        alert('Booking approved successfully! Tenant has been notified to make payment.');
+        setStatusModal({
+          isOpen: true,
+          title: 'Booking Approved!',
+          message: 'The booking has been successfully confirmed. Tenant has been notified to make payment.',
+          type: 'success'
+        });
         fetchBookings();
 
       } catch (error) {
         console.error('Approval error:', error);
-        alert('Failed to approve booking. Please try again later.');
+        showToast('Failed to approve booking. Please try again later.', 'error');
       }
     }
-  };
+  });
+};
 
-  const handleRejectBooking = async (bookingId: string) => {
-    if (window.confirm('Are you sure you want to reject this booking?')) {
-      try {
-        const token = localStorage.getItem('token');
+  const handleRejectBooking = (bookingId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Reject Booking',
+      message: 'Are you sure you want to reject this booking? This action cannot be undone.',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('token');
         const response = await fetch(`http://localhost:5000/api/bookings/${bookingId}/status`, {
           method: 'PUT',
           headers: {
@@ -300,18 +347,24 @@ const Bookings: React.FC = () => {
             console.error('Sync error:', syncError);
           }
 
-          alert('Booking rejected');
+          setStatusModal({
+            isOpen: true,
+            title: 'Booking Rejected',
+            message: 'The booking request has been rejected and removed from pending.',
+            type: 'info'
+          });
           fetchBookings();
         } else {
           const err = await response.json();
-          alert(`Error: ${err.message}`);
+          showToast(`Error: ${err.message}`, 'error');
         }
       } catch (error) {
         console.error('Rejection error:', error);
-        alert('Failed to reject booking. Please try again later.');
+        showToast('Failed to reject booking. Please try again later.', 'error');
       }
     }
-  };
+  });
+};
 
 
   const handleMessageTenant = (booking: any) => {
@@ -325,7 +378,7 @@ const Bookings: React.FC = () => {
     if (!messageText.trim() || !selectedBooking) return;
 
     if (!selectedBooking.tenantId) {
-      alert("Cannot send message: Tenant ID is missing from this booking data.");
+      showToast("Cannot send message: Tenant ID is missing from this booking data.", 'error');
       return;
     }
 
@@ -349,15 +402,15 @@ const Bookings: React.FC = () => {
 
       const result = await response.json();
       if (result.success) {
-        alert("Message sent successfully!");
+        showToast("Message sent successfully!");
         setShowMessageModal(false);
         setMessageText('');
       } else {
-        alert(`Error: ${result.message}`);
+        showToast(`Error: ${result.message}`, 'error');
       }
     } catch (err) {
       console.error("Message send error:", err);
-      alert("Failed to send message. Please try again later.");
+      showToast("Failed to send message. Please try again later.", 'error');
     }
   };
 
@@ -500,7 +553,7 @@ const Bookings: React.FC = () => {
                 </div>
                 <div className="absolute top-4 left-4">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(booking.status)}`}>
-                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                    {booking.status === 'confirmed' ? 'Booked' : booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                   </span>
                 </div>
               </div>
@@ -866,6 +919,25 @@ const Bookings: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText={confirmModal.type === 'danger' ? 'Reject' : 'Approve'}
+      />
+
+      {/* Status Modal */}
+      <StatusModal
+        isOpen={statusModal.isOpen}
+        onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
+        title={statusModal.title}
+        message={statusModal.message}
+        type={statusModal.type}
+      />
     </div>
   );
 };

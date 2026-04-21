@@ -39,9 +39,10 @@ const MapBounds: React.FC<{ properties: Property[] }> = ({ properties }) => {
   const map = useMap();
   
   React.useEffect(() => {
-    if (properties.length > 0) {
+    const validProperties = properties.filter(p => p.lat != null && p.lng != null && !isNaN(p.lat) && !isNaN(p.lng));
+    if (validProperties.length > 0) {
       const bounds = new LatLngBounds(
-        properties.map(p => [p.lat, p.lng] as [number, number])
+        validProperties.map(p => [p.lat, p.lng] as [number, number])
       );
       map.fitBounds(bounds, { padding: [50, 50] });
     }
@@ -129,7 +130,9 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
         
         {properties.length > 1 && <MapBounds properties={properties} />}
         
-        {properties.map((property) => (
+        {properties
+          .filter(property => property.lat != null && property.lng != null && !isNaN(property.lat) && !isNaN(property.lng))
+          .map((property) => (
           <Marker
             key={property.id}
             position={[property.lat, property.lng]}

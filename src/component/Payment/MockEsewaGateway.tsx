@@ -6,7 +6,7 @@ const MockEsewaGateway: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { bookingId, amount: initialAmount } = location.state || {};
-    
+
     const [step, setStep] = useState<'amount' | 'login'>('amount');
     const [amount, setAmount] = useState(initialAmount?.toString() || '1000');
     const [mobile, setMobile] = useState('');
@@ -20,7 +20,7 @@ const MockEsewaGateway: React.FC = () => {
     useEffect(() => {
         const fetchBookingDetails = async () => {
             if (!bookingId) return;
-            
+
             setIsFetchingBooking(true);
             try {
                 const token = localStorage.getItem('token');
@@ -30,7 +30,7 @@ const MockEsewaGateway: React.FC = () => {
                     }
                 });
                 const result = await response.json();
-                
+
                 if (result.success && result.data) {
                     setAmount(result.data.totalAmount.toString());
                 }
@@ -76,7 +76,7 @@ const MockEsewaGateway: React.FC = () => {
                 <div>
                     <button className="language-selector">
                         English
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
                     </button>
                 </div>
             </header>
@@ -121,13 +121,13 @@ const MockEsewaGateway: React.FC = () => {
                             <div className="step-content animate-fade-in">
                                 <h2 className="login-title">How much would you like to pay?</h2>
                                 <p className="step-description">Enter the amount in NPR to initiate your secure transfer via eSewa.</p>
-                                
+
                                 <div className="amount-entry-group">
                                     <label className="amount-input-label">AMOUNT (NPR)</label>
                                     <div className="amount-input-wrapper">
                                         <span className="amount-prefix">Rs.</span>
-                                        <input 
-                                            type="number" 
+                                        <input
+                                            type="number"
                                             className={`amount-large-input ${isFetchingBooking ? 'animate-pulse' : ''}`}
                                             value={amount}
                                             onChange={(e) => setAmount(e.target.value)}
@@ -143,17 +143,17 @@ const MockEsewaGateway: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <button 
+                                <button
                                     className={`esewa-login-btn active`}
                                     onClick={() => setStep('login')}
                                     style={{ marginTop: '2rem' }}
                                 >
                                     Proceed to payment
                                 </button>
-                                
+
                                 <div className="footer-cancel" style={{ marginTop: 'auto' }}>
                                     <a href="/tenant/dashboard" className="cancel-action">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
                                         CANCEL PAYMENT
                                     </a>
                                 </div>
@@ -161,20 +161,20 @@ const MockEsewaGateway: React.FC = () => {
                         ) : (
                             <div className="step-content animate-slide-in">
                                 <div className="back-btn" onClick={() => setStep('amount')}>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
                                     Edit Amount
                                 </div>
                                 <h2 className="login-title">Sign in to your account</h2>
-                                
+
                                 <div className="esewa-form">
                                     <div className="input-container">
                                         <svg className="input-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
                                         </svg>
-                                        <input 
-                                            type="text" 
-                                            className="esewa-input" 
-                                            placeholder="eSewa ID (Mobile Number)" 
+                                        <input
+                                            type="text"
+                                            className="esewa-input"
+                                            placeholder="eSewa ID (Mobile Number)"
                                             value={mobile}
                                             onChange={(e) => setMobile(e.target.value)}
                                         />
@@ -182,27 +182,27 @@ const MockEsewaGateway: React.FC = () => {
 
                                     <div className="input-container">
                                         <svg className="input-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
                                         </svg>
-                                        <input 
-                                            type={showPassword ? "text" : "password"} 
-                                            className="esewa-input" 
-                                            placeholder="Password" 
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            className="esewa-input"
+                                            placeholder="Password"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                         />
                                         <button className="password-toggle-btn" onClick={() => setShowPassword(!showPassword)}>
                                             {showPassword ? (
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22"/><circle cx="12" cy="12" r="3"/></svg>
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22" /><circle cx="12" cy="12" r="3" /></svg>
                                             ) : (
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                                             )}
                                         </button>
                                     </div>
 
                                     <div className="recaptcha-mock">
                                         <div className="recaptcha-left">
-                                            <div 
+                                            <div
                                                 className={`recaptcha-checkbox ${isCaptchaChecked ? 'checked' : ''}`}
                                                 onClick={() => setIsCaptchaChecked(!isCaptchaChecked)}
                                             ></div>
@@ -214,7 +214,7 @@ const MockEsewaGateway: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <button 
+                                    <button
                                         className={`esewa-login-btn ${isLoginValid ? 'active' : ''}`}
                                         onClick={handleLogin}
                                         disabled={isLoading || !isLoginValid}
@@ -231,7 +231,7 @@ const MockEsewaGateway: React.FC = () => {
 
                                 <div className="footer-cancel">
                                     <a href="/tenant/dashboard" className="cancel-action">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
                                         CANCEL PAYMENT
                                     </a>
                                 </div>

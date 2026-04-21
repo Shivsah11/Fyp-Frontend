@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDarkMode } from '../../../context/DarkModeContext';
 import ProfilePictureUpload from './ProfilePictureUpload';
+import { useToast } from '../../../context/ToastContext';
 
 interface SettingsSection {
   id: string;
@@ -21,6 +22,7 @@ interface SettingsItem {
 
 const SettingsManagement: React.FC = () => {
   const { isDarkMode, setDarkMode } = useDarkMode();
+  const { showToast } = useToast();
   const [activeSection, setActiveSection] = useState('profile');
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -194,27 +196,27 @@ const SettingsManagement: React.FC = () => {
 
       const data = await response.json();
       if (response.ok) {
-        alert(`${settingsSections.find(s => s.id === sectionId)?.title} saved successfully!`);
+        showToast(`${settingsSections.find(s => s.id === sectionId)?.title} saved successfully!`);
       } else {
-        alert(`Failed to save: ${response.status} ${data.message || 'Error'}`);
+        showToast(`Failed to save: ${response.status} ${data.message || 'Error'}`, 'error');
       }
     } catch (error: any) {
       console.error('Error saving settings:', error);
-      alert(`Connection Error: ${error.message}. Please ensure the backend is running.`);
+      showToast(`Connection Error: ${error.message}. Please ensure the backend is running.`, 'error');
     }
   };
 
   const handlePasswordChange = async () => {
     if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
-      alert('All password fields are required!');
+      showToast('All password fields are required!', 'error');
       return;
     }
     if (formData.newPassword !== formData.confirmPassword) {
-      alert('New passwords do not match!');
+      showToast('New passwords do not match!', 'error');
       return;
     }
     if (formData.newPassword.length < 6) {
-      alert('Password must be at least 6 characters long!');
+      showToast('Password must be at least 6 characters long!', 'error');
       return;
     }
 
@@ -234,7 +236,7 @@ const SettingsManagement: React.FC = () => {
 
       const data = await response.json();
       if (response.ok) {
-        alert('Password changed successfully!');
+        showToast('Password changed successfully!');
         setFormData(prev => ({
           ...prev,
           currentPassword: '',
@@ -242,11 +244,11 @@ const SettingsManagement: React.FC = () => {
           confirmPassword: ''
         }));
       } else {
-        alert(data.message || 'Failed to change password');
+        showToast(data.message || 'Failed to change password', 'error');
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      alert('Error connecting to server');
+      showToast('Error connecting to server', 'error');
     }
   };
 
@@ -266,13 +268,13 @@ const SettingsManagement: React.FC = () => {
       if (response.ok) {
         setFormData(prev => ({ ...prev, profileImage: imageDataUrl }));
         localStorage.setItem('userImage', imageDataUrl);
-        alert('Profile picture updated successfully!');
+        showToast('Profile picture updated successfully!');
       } else {
-        alert(`Failed to update profile picture: ${response.status} ${data.message || 'Error'}`);
+        showToast(`Failed to update profile picture: ${response.status} ${data.message || 'Error'}`, 'error');
       }
     } catch (error: any) {
       console.error('Error updating profile picture:', error);
-      alert(`Connection Error: ${error.message}. Please ensure the backend is running.`);
+      showToast(`Connection Error: ${error.message}. Please ensure the backend is running.`, 'error');
     }
   };
 
@@ -292,13 +294,13 @@ const SettingsManagement: React.FC = () => {
       if (response.ok) {
         setFormData(prev => ({ ...prev, profileImage: '' }));
         localStorage.removeItem('userImage');
-        alert('Profile picture removed successfully!');
+        showToast('Profile picture removed successfully!');
       } else {
-        alert(`Failed to remove profile picture: ${response.status} ${data.message || 'Error'}`);
+        showToast(`Failed to remove profile picture: ${response.status} ${data.message || 'Error'}`, 'error');
       }
     } catch (error: any) {
       console.error('Error removing profile picture:', error);
-      alert(`Connection Error: ${error.message}. Please ensure the backend is running.`);
+      showToast(`Connection Error: ${error.message}. Please ensure the backend is running.`, 'error');
     }
   };
 
@@ -315,16 +317,16 @@ const SettingsManagement: React.FC = () => {
           });
 
           if (response.ok) {
-            alert('Account deleted successfully. You will be logged out.');
+            showToast('Account deleted successfully. You will be logged out.');
             localStorage.clear();
             window.location.href = '/login';
           } else {
             const data = await response.json();
-            alert(data.message || 'Failed to delete account');
+            showToast(data.message || 'Failed to delete account', 'error');
           }
         } catch (error) {
           console.error('Error deleting account:', error);
-          alert('Error connecting to server');
+          showToast('Error connecting to server', 'error');
         }
       }
     }

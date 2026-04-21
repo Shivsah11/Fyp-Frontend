@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PropertyMap from '../../Shared/PropertyMap';
 import { useDarkMode } from '../../../context/DarkModeContext';
+import { useToast } from '../../../context/ToastContext';
 
 interface Room {
   id: number;
@@ -26,6 +27,7 @@ interface Room {
 
 const RoomDetailPage = () => {
   const { isDarkMode } = useDarkMode();
+  const { showToast } = useToast();
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const [room, setRoom] = useState<Room | null>(null);
@@ -134,7 +136,7 @@ const RoomDetailPage = () => {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!room || !room.landlordId) {
-      alert("Landlord information is not available for this room.");
+      showToast("Landlord information is not available for this room.", "error");
       return;
     }
 
@@ -158,16 +160,16 @@ const RoomDetailPage = () => {
       const data = await response.json();
 
       if (data.success) {
-        alert('Message sent successfully!');
+        showToast('Message sent successfully!');
         setContactSubject('');
         setContactMessage('');
         setShowContactModal(false);
       } else {
-        alert(data.message || 'Failed to send message');
+        showToast(data.message || 'Failed to send message', "error");
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      alert('Failed to send message. Please try again.');
+      showToast('Failed to send message. Please try again.', "error");
     } finally {
       setIsSendingMessage(false);
     }
@@ -176,18 +178,18 @@ const RoomDetailPage = () => {
   const handleBookRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!room) {
-      alert("Room information is not available.");
+      showToast("Room information is not available.", "error");
       return;
     }
 
     if (!checkInDate || !checkOutDate) {
-      alert("Please select check-in and check-out dates.");
+      showToast("Please select check-in and check-out dates.", "error");
       return;
     }
 
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('Please login to book a room.');
+      showToast('Please login to book a room.', "error");
       return;
     }
 
@@ -244,10 +246,10 @@ const RoomDetailPage = () => {
           }));
         }
 
-        alert('Room booked successfully! Your booking request has been sent to the landlord.');
+        showToast('Room booked successfully! Your booking request has been sent to the landlord.');
         navigate('/tenant/dashboard?tab=bookings');
       } else {
-        alert(data.message || 'Failed to book room');
+        showToast(data.message || 'Failed to book room', "error");
       }
     } catch (error) {
       console.error('Error booking room:', error);
@@ -280,7 +282,7 @@ const RoomDetailPage = () => {
       );
 
       if (existingBooking) {
-        alert('You have already booked this property! Check your bookings section.');
+        showToast('You have already booked this property! Check your bookings section.', "error");
         return;
       }
 
@@ -292,7 +294,7 @@ const RoomDetailPage = () => {
         newValue: JSON.stringify(bookingData)
       }));
 
-      alert('Booking request submitted! (Offline mode - will sync when online)');
+      showToast('Booking request submitted! (Offline mode - will sync when online)');
       navigate('/tenant/dashboard?tab=bookings');
     }
   };

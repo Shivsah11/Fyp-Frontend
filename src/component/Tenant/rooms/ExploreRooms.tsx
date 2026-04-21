@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDarkMode } from '../../../context/DarkModeContext';
 import PropertyMap from '../../Shared/PropertyMap';
+import { useToast } from '../../../context/ToastContext';
 
 interface Room {
   id: number;
@@ -26,6 +27,7 @@ interface Room {
 
 const ExploreRooms = () => {
   const { isDarkMode } = useDarkMode();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('all');
@@ -192,7 +194,7 @@ const ExploreRooms = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('Please login to book a room.');
+        showToast('Please login to book a room.', "error");
         return;
       }
 
@@ -252,9 +254,9 @@ const ExploreRooms = () => {
           }));
         }
 
-        alert('Room booked successfully! Your booking request has been sent to the landlord.');
+        showToast('Room booked successfully! Your booking request has been sent to the landlord.');
       } else {
-        alert(result.message || 'Failed to book room. Please try again.');
+        showToast(result.message || 'Failed to book room. Please try again.', "error");
       }
 
     } catch (error) {
@@ -299,12 +301,12 @@ const ExploreRooms = () => {
             newValue: JSON.stringify(bookingData)
           }));
 
-          alert('Room booked successfully! (Offline mode - will sync when online)');
+          showToast('Room booked successfully! (Offline mode - will sync when online)');
         } else {
-          alert('You have already booked this property! Check your bookings section.');
+          showToast('You have already booked this property! Check your bookings section.', "error");
         }
       } else {
-        alert('Failed to book room. Please try again.');
+        showToast('Failed to book room. Please try again.', "error");
       }
     }
   };

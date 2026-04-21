@@ -3,14 +3,18 @@ import { Link } from 'react-router-dom';
 import Bookings from './Bookings';
 import Messages from './Messages';
 import Settings from './Setting';
+import ConfirmationModal from '../../Shared/ConfirmationModal';
+import StatusModal from '../../Shared/StatusModal';
 import PaymentHistory from '../PaymentHistory';
 import PropertyMap from '../../Shared/PropertyMap';
 import { useDarkMode } from '../../../context/DarkModeContext';
 import { NotificationProvider } from '../../../context/NotificationContext';
 import NotificationDropdown from '../../Shared/NotificationDropdown';
+import { useToast } from '../../../context/ToastContext';
 
 const LandlordDashboard = () => {
   const { isDarkMode } = useDarkMode();
+  const { showToast } = useToast();
   const [activeSection, setActiveSection] = useState('dashboard');
   const [analyticsRange, setAnalyticsRange] = useState('6months');
   const [showRangeDropdown, setShowRangeDropdown] = useState(false);
@@ -66,6 +70,34 @@ const LandlordDashboard = () => {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [properties, setProperties] = useState<any[]>([]);
   const [selectedCoordinates, setSelectedCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  
+  // Modal States
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type: 'danger' | 'warning' | 'info' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => { },
+    type: 'info'
+  });
+
+  const [statusModal, setStatusModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'success'
+  });
+  
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [propertyPage, setPropertyPage] = useState(1);
   const propertiesPerPage = 4;
@@ -126,7 +158,15 @@ const LandlordDashboard = () => {
           });
         }
         setRecentBookings(apiBookings || []);
-        setProperties(apiProperties || []);
+        
+        // Normalize properties data to handle inconsistencies between API and frontend
+        const normalizedProperties = (apiProperties || []).map((p: any) => ({
+          ...p,
+          _id: p._id || p.id,
+          title: p.title || p.name,
+          price: typeof p.price === 'number' ? `NPR ${p.price}` : (p.price || 'NPR 0')
+        }));
+        setProperties(normalizedProperties);
       }
     } catch (error) {
       console.error('Fetch landlord dashboard error:', error);
@@ -144,7 +184,7 @@ const LandlordDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('You must be logged in to add a property');
+        showToast('You must be logged in to add a property', 'error');
         return;
       }
 
@@ -180,7 +220,7 @@ const LandlordDashboard = () => {
       });
 
       if (response.ok) {
-        alert(`Property "${propertyName}" added successfully!`);
+        showToast(`Property "${propertyName}" added successfully!`);
         setShowAddForm(false);
         // Reset form
         setPropertyName('');
@@ -192,11 +232,11 @@ const LandlordDashboard = () => {
         fetchDashboardData();
       } else {
         const errorData = await response.json();
-        alert(`Failed to add property: ${errorData.message}`);
+        showToast(`Failed to add property: ${errorData.message}`, 'error');
       }
     } catch (error) {
       console.error('Error adding property:', error);
-      alert(`An error occurred while adding the property: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showToast(`An error occurred while adding the property: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
     }
   };
 
@@ -207,30 +247,49 @@ const LandlordDashboard = () => {
     setShowMapPicker(false);
   };
 
-  const deleteProperty = async (propertyId: string) => {
-    if (!window.confirm('Are you sure you want to delete this property?')) return;
+  const deleteProperty = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Property',
+      message: 'Are you sure you want to delete this property? This action cannot be undone and will remove all associated data.',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch(`http://localhost:5000/api/properties/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
 
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/properties/${propertyId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        alert('Property deleted successfully');
-        fetchDashboardData();
-      } else {
-        const errorData = await response.json();
-        alert(`Failed to delete property: ${errorData.message}`);
+          if (response.ok) {
+            setStatusModal({
+              isOpen: true,
+              title: 'Property Deleted',
+              message: 'The property has been successfully removed from your listings.',
+              type: 'info'
+            });
+            fetchDashboardData();
+          } else {
+            setStatusModal({
+              isOpen: true,
+              title: 'Error',
+              message: 'Failed to delete property. Please try again.',
+              type: 'error'
+            });
+          }
+        } catch (error) {
+          console.error('Error deleting property:', error);
+          setStatusModal({
+            isOpen: true,
+            title: 'Error',
+            message: 'An error occurred while deleting the property.',
+            type: 'error'
+          });
+        }
       }
-    } catch (error) {
-      console.error('Error deleting property:', error);
-      alert('An error occurred while deleting the property');
-    }
+    });
   };
 
   const handleMultipleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -251,7 +310,7 @@ const LandlordDashboard = () => {
 
       Promise.all(imageReaders).then((images) => {
         setNewPropertyImages(prev => [...prev, ...images]);
-        alert(`${images.length} room images added successfully!`);
+        showToast(`${images.length} room images added successfully!`);
       });
     }
   };
@@ -293,14 +352,14 @@ const LandlordDashboard = () => {
           });
 
           if (response.ok) {
-            alert('Property images updated successfully!');
+            showToast('Property images updated successfully!');
             fetchDashboardData();
           } else {
-            alert('Failed to update images');
+            showToast('Failed to update images', 'error');
           }
         } catch (error) {
           console.error('Error updating property images:', error);
-          alert('Error updating images');
+          showToast('Error updating images', 'error');
         }
       });
     }
@@ -315,7 +374,8 @@ const LandlordDashboard = () => {
   }
 
   return (
-    <NotificationProvider userType="landlord">
+    <>
+      <NotificationProvider userType="landlord">
       <div className={`h-screen w-screen flex flex-col relative overflow-hidden ${isDarkMode ? 'bg-[#0f172a]' : 'bg-gray-50'}`}>
 
         {/* Animated background elements - fixed to viewport */}
@@ -509,7 +569,7 @@ const LandlordDashboard = () => {
                                 ? 'bg-blue-500/20 text-blue-600 border border-blue-400/30'
                                 : 'bg-yellow-500/20 text-yellow-600 border border-yellow-400/30'
                                 }`}>
-                                {booking.status}
+                                {booking.status === 'Confirmed' ? 'Booked' : booking.status}
                               </span>
                             </div>
                           </div>
@@ -771,17 +831,23 @@ const LandlordDashboard = () => {
                   <div className={`rounded-xl border p-4 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                     <h4 className={`font-semibold mb-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Property Locations</h4>
                     <PropertyMap
-                      properties={properties.map(property => ({
-                        id: property._id,
-                        title: property.title,
-                        type: property.type,
-                        price: parseInt(property.price.replace(/[^0-9]/g, '')),
-                        location: property.location,
-                        lat: property.lat || 27.7172 + (Math.random() - 0.5) * 0.1,
-                        lng: property.lng || 85.3240 + (Math.random() - 0.5) * 0.1,
-                        available: property.status === 'Available',
-                        rating: property.rating || 0
-                      }))}
+                      properties={properties.map(property => {
+                        // Defensive price parsing
+                        const priceStr = String(property.price || '0');
+                        const priceNum = parseInt(priceStr.replace(/[^0-9]/g, '')) || 0;
+                        
+                        return {
+                          id: property._id || property.id,
+                          title: property.title || property.name || 'Untitled Property',
+                          type: property.type || 'apartment',
+                          price: priceNum,
+                          location: property.location || 'Unknown Location',
+                          lat: property.lat || 27.7172 + (Math.random() - 0.5) * 0.1,
+                          lng: property.lng || 85.3240 + (Math.random() - 0.5) * 0.1,
+                          available: property.status === 'Available',
+                          rating: property.rating || 0
+                        };
+                      })}
                       height="400px"
                       showPopups={true}
                     />
@@ -876,11 +942,12 @@ const LandlordDashboard = () => {
                         <button
                           onClick={() => {
                             setEditingProperty(property);
-                            setPropertyName(property.title);
-                            setPropertyLocation(property.location);
-                            setPropertyPrice(property.price.replace('NPR ', ''));
-                            setPropertyType(property.type);
-                            setPropertyStatus(property.status);
+                            setPropertyName(property.title || property.name || '');
+                            setPropertyLocation(property.location || '');
+                            const priceStr = String(property.price || '');
+                            setPropertyPrice(priceStr.replace('NPR ', ''));
+                            setPropertyType(property.type || '');
+                            setPropertyStatus(property.status || '');
                             setEditingPropertyImages(property.images || (property.image ? [property.image] : []));
                             setShowEditForm(true);
                           }}
@@ -1157,17 +1224,32 @@ const LandlordDashboard = () => {
                           });
 
                           if (response.ok) {
-                            alert('Property updated successfully');
+                            setStatusModal({
+                              isOpen: true,
+                              title: 'Update Successful!',
+                              message: 'Property details have been updated and are now live.',
+                              type: 'success'
+                            });
                             setShowEditForm(false);
                             setEditingProperty(null);
                             fetchDashboardData();
                           } else {
                             const errorData = await response.json();
-                            alert(`Failed to update property: ${errorData.message}`);
+                            setStatusModal({
+                              isOpen: true,
+                              title: 'Update Failed',
+                              message: errorData.message || 'Failed to update property.',
+                              type: 'error'
+                            });
                           }
                         } catch (error) {
                           console.error('Error updating property:', error);
-                          alert('An error occurred while updating the property');
+                          setStatusModal({
+                            isOpen: true,
+                            title: 'Error',
+                            message: 'An error occurred while updating the property.',
+                            type: 'error'
+                          });
                         }
                       }}>
                         <input
@@ -1349,11 +1431,12 @@ const LandlordDashboard = () => {
                               onClick={() => {
                                 setShowDetailsModal(false);
                                 setEditingProperty(selectedProperty);
-                                setPropertyName(selectedProperty.name);
-                                setPropertyLocation(selectedProperty.location);
-                                setPropertyPrice(selectedProperty.price.replace('NPR ', ''));
-                                setPropertyType(selectedProperty.type);
-                                setPropertyStatus(selectedProperty.status);
+                                setPropertyName(selectedProperty.title || selectedProperty.name || '');
+                                setPropertyLocation(selectedProperty.location || '');
+                                const priceStr = String(selectedProperty.price || '');
+                                setPropertyPrice(priceStr.replace('NPR ', ''));
+                                setPropertyType(selectedProperty.type || '');
+                                setPropertyStatus(selectedProperty.status || '');
                                 setShowEditForm(true);
                               }}
                               className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg text-sm font-medium transition-all duration-300 border border-white/20 hover:border-white/30"
@@ -1408,6 +1491,27 @@ const LandlordDashboard = () => {
         </div>
       </div>
     </NotificationProvider>
+    
+    {/* Confirmation Modal */}
+    <ConfirmationModal
+      isOpen={confirmModal.isOpen}
+      onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      onConfirm={confirmModal.onConfirm}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      confirmText={confirmModal.type === 'danger' ? 'Delete' : 'Confirm'}
+    />
+
+    {/* Status Modal */}
+    <StatusModal
+      isOpen={statusModal.isOpen}
+      onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
+      title={statusModal.title}
+      message={statusModal.message}
+      type={statusModal.type}
+    />
+  </>
   );
 };
 

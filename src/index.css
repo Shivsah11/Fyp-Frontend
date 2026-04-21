@@ -73,3 +73,18 @@ input[type=number] {
     scrollbar-width: none;
   }
 }
+
+@keyframes toast-progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.animate-toast-progress {
+  animation: toast-progress 3s linear forwards;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

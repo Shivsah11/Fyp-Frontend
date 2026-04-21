@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useDarkMode } from '../../../context/DarkModeContext';
 import PaymentHistory from '../payment/PaymentHistory';
@@ -11,6 +11,8 @@ import MessagePortal from '../bookings/MessagePortal';
 import { NotificationProvider } from '../../../context/NotificationContext';
 import type { Notification as _Notification } from '../../../context/NotificationContext';
 import NotificationDropdown from '../../Shared/NotificationDropdown';
+import { useToast } from '../../../context/ToastContext';
+import RedeemCoinsModal from '../rewards/RedeemCoinsModal';
 
 interface Payment {
   id: string;
@@ -23,6 +25,7 @@ interface Payment {
 
 const Dashboard = () => {
   const { isDarkMode } = useDarkMode();
+  const { showToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -41,7 +44,19 @@ const Dashboard = () => {
   const [profileImage, setProfileImage] = useState(localStorage.getItem('userImage') || '');
   const [currentBookingPage, setCurrentBookingPage] = useState(1);
   const [isMessagePortalOpen, setIsMessagePortalOpen] = useState(false);
+  const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
   const itemsPerPage = 3;
+  const prevCoinsRef = useRef(coins);
+  const [shouldAnimateCoins, setShouldAnimateCoins] = useState(false);
+
+  useEffect(() => {
+    if (coins > prevCoinsRef.current) {
+      setShouldAnimateCoins(true);
+      const timer = setTimeout(() => setShouldAnimateCoins(false), 1000);
+      return () => clearTimeout(timer);
+    }
+    prevCoinsRef.current = coins;
+  }, [coins]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -98,6 +113,17 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
+
+    // Show welcome reward toast if applicable
+    const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeReward');
+    const userCoins = parseInt(localStorage.getItem('userCoins') || '0');
+    
+    if (!hasSeenWelcome && userCoins === 25) {
+      setTimeout(() => {
+        showToast("🎉 Welcome Bonus! You've received 25 coins for joining via referral!", "success");
+        localStorage.setItem('hasSeenWelcomeReward', 'true');
+      }, 2000);
+    }
   }, []);
 
   // Listen for localStorage changes to sync profile image across components
@@ -166,6 +192,7 @@ const Dashboard = () => {
       '_blank'
     );
     setInviteSent(true);
+    showToast(`Invite sent to ${friendEmail}!`, 'success');
     setTimeout(() => setInviteSent(false), 3000);
     setFriendEmail('');
   };
@@ -285,9 +312,37 @@ const Dashboard = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               {/* Coins Badge */}
-              <div className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 border ${isDarkMode ? 'bg-yellow-900/30 border-yellow-700' : 'bg-yellow-50 border-yellow-200 shadow-sm'}`}>
-                <span className="text-yellow-500 text-sm">🪙</span>
-                <span className={`text-xs font-black ${isDarkMode ? 'text-yellow-500' : 'text-yellow-700'}`}>{coins}</span>
+              <div 
+                onClick={() => setIsRedeemModalOpen(true)}
+                className={`flex items-center gap-2 rounded-full px-4 py-2 border transition-all duration-500 group cursor-pointer relative overflow-hidden active:scale-95 ${
+                  shouldAnimateCoins ? 'scale-110 shadow-[0_0_20px_rgba(245,158,11,0.4)]' : ''
+                } ${
+                  isDarkMode 
+                    ? 'bg-yellow-900/20 border-yellow-700/50 hover:bg-yellow-900/30 shadow-[0_0_15px_rgba(0,0,0,0.2)]' 
+                    : 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200 shadow-sm hover:shadow-md'
+                }`}
+                title="Your Balance"
+              >
+                {/* Shine effect on hover */}
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none"></div>
+                
+                <div className={`relative ${shouldAnimateCoins ? 'animate-bounce' : 'group-hover:rotate-[360deg] transition-transform duration-700'}`}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" fill="url(#coinGradient)" stroke="#D97706" strokeWidth="1.5"/>
+                    <circle cx="12" cy="12" r="7" stroke="#F59E0B" strokeWidth="1" strokeDasharray="2 2"/>
+                    <path d="M12 7V17M12 7L9 10M12 7L15 10M12 17L9 14M12 17L15 14" stroke="#B45309" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <defs>
+                      <linearGradient id="coinGradient" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#FDE68A"/>
+                        <stop offset="0.5" stopColor="#F59E0B"/>
+                        <stop offset="1" stopColor="#D97706"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+                <span className={`text-sm font-black tracking-tight ${isDarkMode ? 'text-yellow-500' : 'text-yellow-700'}`}>
+                  {coins}
+                </span>
               </div>
 
               <div className={`text-right hidden md:block`}>
@@ -817,6 +872,12 @@ const Dashboard = () => {
           };
           return null;
         })()}
+        <RedeemCoinsModal
+          isOpen={isRedeemModalOpen}
+          onClose={() => setIsRedeemModalOpen(false)}
+          currentCoins={coins}
+          onRedeemSuccess={(newBalance) => setCoins(newBalance)}
+        />
       </div>
     </NotificationProvider>
   );

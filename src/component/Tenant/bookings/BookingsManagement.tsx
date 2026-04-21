@@ -508,12 +508,9 @@ const BookingsManagement: React.FC = () => {
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
-                    <div className="absolute top-1 left-1 flex flex-wrap gap-0.5">
-                      <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border backdrop-blur-md ${getStatusColor(booking.status)}`}>
+                    <div className="absolute top-2 left-2">
+                      <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border backdrop-blur-md ${getStatusColor(booking.status)}`}>
                         {booking.status === 'confirmed' ? 'Booked' : booking.status}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border backdrop-blur-md ${getPaymentStatusColor(booking.paymentStatus)}`}>
-                        {booking.paymentStatus === 'paid' ? 'Paid' : 'Pending'}
                       </span>
                     </div>
                     <div className="absolute bottom-1 left-1 right-1">
