@@ -660,7 +660,11 @@ const Dashboard = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       {recommendedRooms && recommendedRooms.length > 0 ? recommendedRooms.slice(0, 4).map((room) => (
-                        <div key={room.id} className={`rounded-2xl border overflow-hidden hover:shadow-xl transition-all duration-500 group flex flex-row h-28 ${isDarkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-white border-gray-100'}`}>
+                        <div 
+                          key={room.id} 
+                          onClick={() => navigate(`/tenant/room/${room.id}`)}
+                          className={`cursor-pointer rounded-2xl border overflow-hidden hover:shadow-xl transition-all duration-500 group flex flex-row h-28 ${isDarkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-white border-gray-100'}`}
+                        >
                           <div className="w-32 h-full relative overflow-hidden shrink-0">
                             {room.image ? (
                               <img src={room.image} alt={room.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -669,9 +673,11 @@ const Dashboard = () => {
                                 <span className="text-emerald-500/40 text-[8px] font-black uppercase tracking-widest">No Image</span>
                               </div>
                             )}
+                            {/* Rating removed from frontend per request - commented out to keep the code clean and readable
                             <div className={`absolute top-2 right-2 px-1.5 py-0.5 rounded-lg text-[8px] font-black shadow-lg ${isDarkMode ? 'bg-gray-900/90 text-yellow-400' : 'bg-white/90 text-yellow-600'}`}>
                               ★ {room.rating || '4.5'}
                             </div>
+                            */}
                           </div>
                           <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
                             <h4 className={`font-bold text-sm truncate mb-1 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{room.title}</h4>

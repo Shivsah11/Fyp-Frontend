@@ -405,12 +405,14 @@ const RoomDetailPage = () => {
                 <div className={`text-[9px] font-black uppercase tracking-widest ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                   Monthly Commitment
                 </div>
+                {/* Rating component commented out per request to remove from frontend
                 <div className={`mt-1 flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-yellow-50 border-yellow-100'
                   }`}>
                   <span className="text-xl">⭐</span>
                   <span className={`font-black ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{room.rating}</span>
                   <span className={`text-xs font-bold ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>(24 reviews)</span>
                 </div>
+                */}
               </div>
             </div>
 

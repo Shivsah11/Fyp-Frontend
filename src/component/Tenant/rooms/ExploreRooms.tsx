@@ -335,12 +335,14 @@ const ExploreRooms = () => {
             {room.available ? 'Ready' : 'Occupied'}
           </span>
         </div>
+        {/* Rating removed from frontend per request - commented out to keep the code clean and readable
         <div className="absolute bottom-3 left-3">
           <div className="flex items-center gap-1 px-2 py-0.5 bg-black/50 backdrop-blur-md rounded-full border border-white/10">
             <span className="text-yellow-400 text-[10px]">⭐</span>
             <span className="text-white text-[8px] font-black">{room.rating}</span>
           </div>
         </div>
+        */}
       </div>
 
       <div className="p-4">
@@ -477,6 +479,8 @@ const ExploreRooms = () => {
                     <div className={`w-2 h-2 rounded-full ${sortBy === 'price' ? 'bg-white' : 'bg-gray-300'}`}></div>
                     Price
                   </button>
+
+                  {/* Rating sort button commented out per request to remove from frontend
                   <button
                     onClick={() => setSortBy(sortBy === 'rating' ? 'none' : 'rating')}
                     className={`flex items-center gap-2 px-6 py-2 rounded-full border transition-all duration-300 text-xs font-bold ${sortBy === 'rating'
@@ -487,6 +491,7 @@ const ExploreRooms = () => {
                     <div className={`w-2 h-2 rounded-full ${sortBy === 'rating' ? 'bg-white' : 'bg-gray-300'}`}></div>
                     Rating
                   </button>
+                  */}
                 </div>
               </div>
 
